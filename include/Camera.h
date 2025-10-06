@@ -16,6 +16,7 @@ public:
 	glm::vec3 Up = glm::vec3(0.0f, 1.0f, 0.0f);
 
 	bool firstClick = true;
+	bool isInCreative = false;
 
 	int width;
 	int height;
@@ -42,6 +43,14 @@ public:
 
 	void set_Y(float v) {
 		Position.y = v;
+	}
+
+	bool get_player_gamemode() {
+		return isInCreative;
+	}
+
+	void set_player_gamemode(bool b) {
+		isInCreative = b;
 	}
 
 	glm::vec3 getPosition() const { return Position; }

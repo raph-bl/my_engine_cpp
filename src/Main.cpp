@@ -3,8 +3,10 @@
 #define GLFW_INCLUDE_NONE
 #endif
 #include <GLFW/glfw3.h>
+#include <GL/glut.h>
 #include "WindowManager.h"
 #include "Camera.h"
+#include "../include/TextManager.h"
 #include <glm/vec3.hpp>
 #include <iostream>
 #include <chrono>
@@ -20,7 +22,6 @@ using namespace std;
 GLFWwindow* window;
 static Camera *cam          = nullptr;
 WindowManager *manager  = WindowManager::getInstance();
-
 void update_loop() {
     static float angle = 0.0f;
     static const float ANGULAR_SPEED = 45.0f;
@@ -57,25 +58,28 @@ void render_loop() {
     glColor3f(1.0f, 1.0f, 1.0f);
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
-
+    
+    
     std::vector<std::unique_ptr<Cube>> cubes;
     cubes.emplace_back(std::make_unique<Cube>(glm::vec3(0.0f, 0.0f, 0.0f)));
     cubes.emplace_back(std::make_unique<Cube>(glm::vec3(1.0f, 0.0f, 0.0f)));
     cubes.emplace_back(std::make_unique<Cube>(glm::vec3(-1.0f, 0.0f, 0.0f)));
-
+    
     cubes.emplace_back(std::make_unique<Cube>(glm::vec3(2.0f, 0.0f, 0.0f)));
     cubes.emplace_back(std::make_unique<Cube>(glm::vec3(2.0f, 1.0f, 0.0f)));
     cubes.emplace_back(std::make_unique<Cube>(glm::vec3(2.0f, 2.0f, 0.0f)));
-
+    
     cubes.emplace_back(std::make_unique<Cube>(glm::vec3(2.0f, 2.0f, 1.0f)));
     cubes.emplace_back(std::make_unique<Cube>(glm::vec3(2.0f, 2.0f, 2.0f)));
     cubes.emplace_back(std::make_unique<Cube>(glm::vec3(2.0f, 2.0f, 3.0f)));
-
-    if (cam) {
-        glm::vec3 camPos = cam->getPosition();
-        glm::vec3 camFront = cam->getFront();
-        glm::vec3 cubePos = camPos + camFront * 5.0f; // 2 unités devant la caméra
-        cubes.emplace_back(std::make_unique<Cube>(cubePos));
+    
+    if (cam->get_player_gamemode()) {
+        if (cam) {
+            glm::vec3 camPos = cam->getPosition();
+            glm::vec3 camFront = cam->getFront();
+            glm::vec3 cubePos = camPos + camFront * 5.0f;
+            cubes.emplace_back(std::make_unique<Cube>(cubePos));
+        }
     }
 
 
@@ -94,6 +98,11 @@ void render_loop() {
         glVertex3f(-10.5f, 0, i);
     }
     glEnd();
+
+    std::string labelTitle = "My_engine - X: " + std::to_string(round(cam->get_X())) + "/Y: " + std::to_string(round(cam->get_Y())) + "/Z: " + std::to_string(round(cam->get_Z()));
+    std::string labelMod = "Creative mod : " + std::to_string(cam->get_player_gamemode()); 
+    drawTextOnScreen(labelTitle, 10, 20, manager->getWidth(), manager->getHeight());
+    drawTextOnScreen(labelMod, 10, 40, manager->getWidth(), manager->getHeight());
 }
 
 void init() {
@@ -132,6 +141,13 @@ int main(int argc, char **argv) {
         glfwDestroyWindow(window);
         glfwTerminate();
         return -1;
+    }
+    // Initialize GLUT (required before using glutBitmapCharacter)
+    // We only use GLUT for bitmap fonts here; GLFW is still the window/context provider.
+    {
+        int glut_argc = 1;
+        char *glut_argv[1] = { (char*)"my_engine" };
+        glutInit(&glut_argc, glut_argv);
     }
     glfwSetWindowTitle(window, window_title.c_str());
 

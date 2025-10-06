@@ -1,6 +1,7 @@
 #include "Camera.h"
 #include <cmath>
 #include <GL/gl.h>
+#include <cstdio>
 
 Camera::Camera(int width, int height, glm::vec3 position)
 {
@@ -26,7 +27,6 @@ void Camera::Matrix(float FOVdeg, float nearPlane, float farPlane, const char* u
 
 void Camera::Inputs(GLFWwindow* window)
 {
-	// Handles key inputs
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
 	{
 		Position += speed * Orientation;
@@ -55,24 +55,45 @@ void Camera::Inputs(GLFWwindow* window)
 	{
 		speed = 0.4f;
 	}
-	else if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_RELEASE)
+	{
+		static bool key1_was_pressed = false;
+		bool key1_is_pressed = (glfwGetKey(window, GLFW_KEY_Y) == GLFW_PRESS);
+		if (key1_is_pressed && !key1_was_pressed) {
+			set_player_gamemode(!isInCreative);
+		}
+		key1_was_pressed = key1_is_pressed;
+	}
+
+	if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_RELEASE)
 	{
 		speed = 0.1f;
 	}
 
+	static bool cursorCaptured = false;	
+	{
+		static bool escWasPressed = false;
+		bool escIsPressed = (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS);
+		if (escIsPressed && !escWasPressed && cursorCaptured) {
+			// Release cursor
+			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+			cursorCaptured = false;
+			firstClick = true;
+		}
+		escWasPressed = escIsPressed;
+	}
 
-	if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)
+	if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS && !cursorCaptured)
 	{
 		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+		glfwSetCursorPos(window, (width / 2), (height / 2));
+		cursorCaptured = true;
+		firstClick = false;
+	}
 
-		if (firstClick)
-		{
-			glfwSetCursorPos(window, (width / 2), (height / 2));
-			firstClick = false;
-		}
-
-		double mouseX;
-		double mouseY;
+	// Handle mouse look when cursor is captured
+	if (cursorCaptured)
+	{
+		double mouseX, mouseY;
 		glfwGetCursorPos(window, &mouseX, &mouseY);
 
 		// Normalizes and shifts the coordinates of the cursor such that they begin in the middle of the screen
@@ -92,10 +113,5 @@ void Camera::Inputs(GLFWwindow* window)
 
 		// Sets mouse cursor to the middle of the screen so that it doesn't end up roaming around
 		glfwSetCursorPos(window, (width / 2), (height / 2));
-	}
-	else if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_RELEASE)
-	{
-		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-		firstClick = true;
 	}
 }
