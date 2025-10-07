@@ -22,6 +22,7 @@ using namespace std;
 GLFWwindow* window;
 static Camera *cam          = nullptr;
 WindowManager *manager  = WindowManager::getInstance();
+std::vector<std::unique_ptr<Cube>> cubes;
 void update_loop() {
     static float angle = 0.0f;
     static const float ANGULAR_SPEED = 45.0f;
@@ -46,7 +47,7 @@ void update_loop() {
         last = clock::now();
     }
     if (cam) {
-        cam->Inputs(window);
+        cam->Inputs(window, cubes);
         cam->Matrix(45.0f, 0.1f, 100.0f, "camera");
     }
     // cout << TARGET_FPS << endl;
@@ -59,27 +60,18 @@ void render_loop() {
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
     
-    
-    std::vector<std::unique_ptr<Cube>> cubes;
-    cubes.emplace_back(std::make_unique<Cube>(glm::vec3(0.0f, 0.0f, 0.0f)));
-    cubes.emplace_back(std::make_unique<Cube>(glm::vec3(1.0f, 0.0f, 0.0f)));
-    cubes.emplace_back(std::make_unique<Cube>(glm::vec3(-1.0f, 0.0f, 0.0f)));
-    
-    cubes.emplace_back(std::make_unique<Cube>(glm::vec3(2.0f, 0.0f, 0.0f)));
-    cubes.emplace_back(std::make_unique<Cube>(glm::vec3(2.0f, 1.0f, 0.0f)));
-    cubes.emplace_back(std::make_unique<Cube>(glm::vec3(2.0f, 2.0f, 0.0f)));
-    
-    cubes.emplace_back(std::make_unique<Cube>(glm::vec3(2.0f, 2.0f, 1.0f)));
-    cubes.emplace_back(std::make_unique<Cube>(glm::vec3(2.0f, 2.0f, 2.0f)));
-    cubes.emplace_back(std::make_unique<Cube>(glm::vec3(2.0f, 2.0f, 3.0f)));
-    
-    if (cam->get_player_gamemode()) {
-        if (cam) {
-            glm::vec3 camPos = cam->getPosition();
-            glm::vec3 camFront = cam->getFront();
-            glm::vec3 cubePos = camPos + camFront * 5.0f;
-            cubes.emplace_back(std::make_unique<Cube>(cubePos));
-        }
+    if (cubes.empty()) {
+        cubes.emplace_back(std::make_unique<Cube>(glm::vec3(0.0f, 0.0f, 0.0f)));
+        cubes.emplace_back(std::make_unique<Cube>(glm::vec3(1.0f, 0.0f, 0.0f)));
+        cubes.emplace_back(std::make_unique<Cube>(glm::vec3(-1.0f, 0.0f, 0.0f)));
+        
+        cubes.emplace_back(std::make_unique<Cube>(glm::vec3(2.0f, 0.0f, 0.0f)));
+        cubes.emplace_back(std::make_unique<Cube>(glm::vec3(2.0f, 1.0f, 0.0f)));
+        cubes.emplace_back(std::make_unique<Cube>(glm::vec3(2.0f, 2.0f, 0.0f)));
+        
+        cubes.emplace_back(std::make_unique<Cube>(glm::vec3(2.0f, 2.0f, 1.0f)));
+        cubes.emplace_back(std::make_unique<Cube>(glm::vec3(2.0f, 2.0f, 2.0f)));
+        cubes.emplace_back(std::make_unique<Cube>(glm::vec3(2.0f, 2.0f, 3.0f)));
     }
 
 
@@ -100,9 +92,12 @@ void render_loop() {
     glEnd();
 
     std::string labelTitle = "My_engine - X: " + std::to_string(round(cam->get_X())) + "/Y: " + std::to_string(round(cam->get_Y())) + "/Z: " + std::to_string(round(cam->get_Z()));
-    std::string labelMod = "Creative mod : " + std::to_string(cam->get_player_gamemode()); 
+    std::string labelMod = "Creative mod: " + std::to_string(cam->get_player_gamemode());
+    std::string labelCubes = "Cubes: " + std::to_string(cubes.size());
+    // cout << "Cubes count: " << cubes.size() << endl;
     drawTextOnScreen(labelTitle, 10, 20, manager->getWidth(), manager->getHeight());
     drawTextOnScreen(labelMod, 10, 40, manager->getWidth(), manager->getHeight());
+    drawTextOnScreen(labelCubes, 10, 60, manager->getWidth(), manager->getHeight());
 }
 
 void init() {
