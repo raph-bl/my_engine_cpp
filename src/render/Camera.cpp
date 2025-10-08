@@ -31,9 +31,52 @@ void Camera::Matrix(float FOVdeg, float nearPlane, float farPlane, const char *u
 	glLoadMatrixf(glm::value_ptr(view));
 }
 
+float Camera::getDistanceToCube(const glm::vec3& cubePosition) const {
+	return glm::length(cubePosition - Position);
+}
+
+int Camera::getPointedCubeIndex(const std::vector<std::unique_ptr<Cube>>& cubes, float maxDistance) const
+{
+    glm::vec3 rayOrigin = Position;
+    glm::vec3 rayDirection = Orientation;
+    
+    int closestCubeIndex = -1;
+    float closestDistance = maxDistance;
+    
+    for (size_t i = 0; i < cubes.size(); ++i) {
+        if (!cubes[i]) continue;
+        
+        glm::vec3 cubePos = cubes[i]->getPosition();
+        
+        // Calcul du point le plus proche sur le rayon vers le cube
+        glm::vec3 toCube = cubePos - rayOrigin;
+        float projectionLength = glm::dot(toCube, rayDirection);
+        
+        // Si le cube est derrière la caméra, on l'ignore
+        if (projectionLength < 0) continue;
+        
+        // Point le plus proche sur le rayon
+        glm::vec3 closestPointOnRay = rayOrigin + rayDirection * projectionLength;
+        
+        // Distance entre le cube et le rayon
+        float distanceToRay = glm::length(cubePos - closestPointOnRay);
+        
+        // Si le rayon passe suffisamment près du cube (rayon du cube = 0.5)
+        if (distanceToRay <= 0.5f) {
+            float distanceFromCamera = getDistanceToCube(cubePos);
+            
+            if (distanceFromCamera < closestDistance) {
+                closestDistance = distanceFromCamera;
+                closestCubeIndex = static_cast<int>(i);
+            }
+        }
+    }
+    
+    return closestCubeIndex;
+}
+
 void Camera::Inputs(GLFWwindow *window, std::vector<std::unique_ptr<Cube>>& cubes)
 {
-	// Handles key inputs
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
 	{
 		Position += speed * Orientation;
@@ -64,7 +107,7 @@ void Camera::Inputs(GLFWwindow *window, std::vector<std::unique_ptr<Cube>>& cube
 	}
 	{
 		static bool key1_was_pressed = false;
-		bool key1_is_pressed = (glfwGetKey(window, GLFW_KEY_Y) == GLFW_PRESS);
+		bool key1_is_pressed = (glfwGetKey(window, GLFW_KEY_TAB) == GLFW_PRESS);
 		if (key1_is_pressed && !key1_was_pressed)
 		{
 			set_player_gamemode(!isInCreative);
@@ -81,7 +124,6 @@ void Camera::Inputs(GLFWwindow *window, std::vector<std::unique_ptr<Cube>>& cube
 		bool escIsPressed = (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS);
 		if (escIsPressed && !escWasPressed && cursorCaptured)
 		{
-			// Release cursor
 			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 			cursorCaptured = false;
 			firstClick = true;
@@ -113,16 +155,32 @@ void Camera::Inputs(GLFWwindow *window, std::vector<std::unique_ptr<Cube>>& cube
 		bool leftClickIsPressed = (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS);
 		if (leftClickIsPressed && !leftClickWasPressed && cursorCaptured && get_player_gamemode() == true)
 		{
-			glm::vec3 camPos = getPosition();
-			glm::vec3 camFront = getFront();
-			glm::vec3 cubePos = camPos + camFront * 5.0f;
-			cubes.emplace_back(std::make_unique<Cube>(cubePos));
-			cout << "Cube deleted at: (" << cubePos.x << ", " << cubePos.y << ", " << cubePos.z << ")" << endl;
+			int pointedCubeIndex = getPointedCubeIndex(cubes);
+			if (pointedCubeIndex != -1)
+			{
+				glm::vec3 cubePos = cubes[pointedCubeIndex]->getPosition();
+				cubes.erase(cubes.begin() + pointedCubeIndex);
+				cout << "Cube deleted at: (" << cubePos.x << ", " << cubePos.y << ", " << cubePos.z << ")" << endl;
+			}
 		}
 		leftClickWasPressed = leftClickIsPressed;
 	}
+	{
+		static bool yKeyWasPressed = false;
+		bool yKeyIsPressed = (glfwGetKey(window, GLFW_KEY_Y) == GLFW_PRESS);
+		if (yKeyIsPressed && !yKeyWasPressed && cursorCaptured && get_player_gamemode() == true)
+		{
+			int pointedCubeIndex = getPointedCubeIndex(cubes);
+			if (pointedCubeIndex != -1)
+			{
+				glm::vec3 cubePos = cubes[pointedCubeIndex]->getPosition();
+				cubes[pointedCubeIndex]->setColor(1.0f, 0.0f, 0.0f);
+				cout << "Changed color at: (" << cubePos.x << ", " << cubePos.y << ", " << cubePos.z << ")" << endl;
+			}
+		}
+		yKeyWasPressed = yKeyIsPressed;
+	}
 
-	// Handle mouse look when cursor is captured
 	if (cursorCaptured)
 	{
 		double mouseX, mouseY;

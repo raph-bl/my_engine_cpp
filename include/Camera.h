@@ -10,7 +10,6 @@
 #include<vector>
 #include<memory>
 
-// Forward declaration
 class Cube;
 
 class Camera
@@ -33,6 +32,9 @@ public:
 
 	void Matrix(float FOVdeg, float nearPlane, float farPlane, const char* uniform);
 	void Inputs(GLFWwindow* window, std::vector<std::unique_ptr<Cube>>& cubes);
+	
+	float getDistanceToCube(const glm::vec3& cubePosition) const;
+	int getPointedCubeIndex(const std::vector<std::unique_ptr<Cube>>& cubes, float maxDistance = 10.0f) const;
 
 	float get_X() {
 		return Position.x;
@@ -46,8 +48,8 @@ public:
 		return Position.z;
 	}
 
-	void set_Y(float v) {
-		Position.y = v;
+	void setPosition(glm::vec3 pos) {
+		Position = pos;
 	}
 
 	bool get_player_gamemode() {

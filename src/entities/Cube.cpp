@@ -3,7 +3,7 @@
 #include <GL/glew.h>
 
 Cube::Cube(glm::vec3 pos) 
-    : position(pos), scale(1.0f), rotation(0.0f) {
+    : position(pos), scale(1.0f), rotation(0.0f), color(1.0f, 1.0f, 1.0f) {
     setupMesh();
 }
 
@@ -53,6 +53,14 @@ void Cube::setupMesh() {
     glBindVertexArray(0);
 }
 
+void Cube::setColor(glm::vec3 newColor) {
+    color = newColor;
+}
+
+void Cube::setColor(float r, float g, float b) {
+    color = glm::vec3(r,g,b);
+}
+
 void Cube::setPosition(glm::vec3 pos) {
     position = pos;
 }
@@ -92,6 +100,8 @@ void Cube::draw(unsigned int shaderProgram) {
     } else {
         glPushMatrix();
         glMultMatrixf(&model[0][0]);
+
+        glColor3f(color.r, color.g, color.b);
 
         glBindBuffer(GL_ARRAY_BUFFER, VBO);
         glEnableClientState(GL_VERTEX_ARRAY);

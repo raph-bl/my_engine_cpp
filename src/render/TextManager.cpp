@@ -1,7 +1,7 @@
 #include "../include/TextManager.h"
 #include <GL/glut.h>
 
-// TODO: review this function
+// TODO: review this function : probleme valgrind
 void drawTextOnScreen(const std::string &text, int x, int y, int screenW, int screenH) {
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
