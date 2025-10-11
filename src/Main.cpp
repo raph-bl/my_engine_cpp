@@ -107,6 +107,7 @@ void render_loop()
     int closestCubeIndex = -1;
     float closestDistance = 1.5f;
 
+    glBindVertexArray(0); // Réinitialise l'état VAO avant d'utiliser du code legacy
     glPushMatrix();
     glColor3f(0.0f, 0.0f, 0.0f);
     glTranslatef(vecX, vecY, vecZ);
@@ -114,13 +115,14 @@ void render_loop()
     glutWireSphere(1.0f, 30, 30);
     glLineWidth(1.0f);
     glPopMatrix();
+
     if (cam->get_Y() <= 0) {
         cam->set_Y(0.5f);
     }
 
-    glPolygonMode(GL_FRONT_AND_BACK, GL_POLYGON);
-    draw(suzanne);
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    //glPolygonMode(GL_FRONT_AND_BACK, GL_POLYGON);
+    // draw(suzanne);
+    //glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
     
     if (moving) {
