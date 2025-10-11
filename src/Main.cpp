@@ -5,6 +5,7 @@
 #include <GLFW/glfw3.h>
 #include <GL/glut.h>
 #include "WindowManager.h"
+#include "ObjLoader.h"
 #include "Camera.h"
 #include "../include/TextManager.h"
 #include <glm/vec3.hpp>
@@ -27,6 +28,8 @@ float vecX = 1.0f;
 float vecY = 5.0f;
 float vecZ = 1.0f;
 bool vecYIncrease = true;
+
+Mesh *suzanne = nullptr;
 
 static float velocityY = -2.5f;
 static const float gravity = -800.0f;
@@ -62,7 +65,7 @@ void update_loop()
         if (vecY <= ground_level) {
             vecY = ground_level;
             velocityY = -velocityY * bounce_factor;
-            
+
             if (abs(velocityY) < 1.0f) {
                 velocityY = 0.0f;
                 vecX = static_cast<float>(rand()) / static_cast<float>(RAND_MAX) * 10.0f - 5.0f;
@@ -115,12 +118,17 @@ void render_loop()
         cam->set_Y(0.5f);
     }
 
+    glPolygonMode(GL_FRONT_AND_BACK, GL_POLYGON);
+    draw(suzanne);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+    
     if (moving) {
-        cout << "Player moved from (" 
-        << prev_pos.x << ", " << prev_pos.y << ", " << prev_pos.z 
-        << ") to (" 
-             << camPos.x << ", " << camPos.y << ", " << camPos.z 
-             << ")" << endl;        
+        // cout << "Player moved from (" 
+        // << prev_pos.x << ", " << prev_pos.y << ", " << prev_pos.z 
+        // << ") to (" 
+        //      << camPos.x << ", " << camPos.y << ", " << camPos.z 
+        //      << ")" << endl;        
 
         for (size_t i = 0; i < cubes.size(); i++) {
             if (!cubes[i]) continue;
@@ -252,6 +260,9 @@ void render_loop()
 void init()
 {
     cam = new Camera(manager->getWidth(), manager->getHeight(), glm::vec3(0.0f, 0.5f, 0.0f));
+
+    suzanne = loadOBJ("assets/objects/suzanne.obj");
+
 
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
