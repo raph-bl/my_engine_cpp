@@ -35,6 +35,27 @@ float Camera::getDistanceToCube(const glm::vec3& cubePosition) const {
 	return glm::length(cubePosition - Position);
 }
 
+bool Camera::isCubePointed(const Cube& cube, float maxDistance) const{
+	glm::vec3 rayOrigin = Position;
+	glm::vec3 rayDirection = Orientation;
+	glm::vec3 cubePos = cube.getPosition();
+
+	glm::vec3 toCube = cubePos - rayOrigin;
+	float projectionLength = glm::dot(toCube, rayDirection);
+
+	if (projectionLength < 0) return false;
+
+	glm::vec3 closestPointOnRay = rayOrigin + rayDirection * projectionLength;
+	float distanceToRay = glm::length(cubePos - closestPointOnRay);
+
+	if (distanceToRay <= 0.5f)
+	{
+		float distanceFromCamera = getDistanceToCube(cubePos);
+		return distanceFromCamera <= maxDistance;
+	}
+	return false;
+}
+
 int Camera::getPointedCubeIndex(const std::vector<std::unique_ptr<Cube>>& cubes, float maxDistance) const
 {
     glm::vec3 rayOrigin = Position;
@@ -93,8 +114,16 @@ void Camera::Inputs(GLFWwindow *window, std::vector<std::unique_ptr<Cube>>& cube
 	{
 		Position += speed * glm::normalize(glm::cross(Orientation, Up));
 	}
+	static bool space_was_pressed = false;
+	bool space_is_pressed = (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS);
 	if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
 	{
+		// if (space_is_pressed && !space_was_pressed) {
+		// 	Position.y += 0.5f;
+		// 	isInAir = true;
+		// }
+		// isInAir = false;
+		// space_was_pressed = space_is_pressed;
 		Position += speed * Up;
 	}
 	if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)

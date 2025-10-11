@@ -21,6 +21,7 @@ public:
 
 	bool firstClick = true;
 	bool isInCreative = false;
+	bool isInAir = false;
 
 	int width;
 	int height;
@@ -35,6 +36,7 @@ public:
 	
 	float getDistanceToCube(const glm::vec3& cubePosition) const;
 	int getPointedCubeIndex(const std::vector<std::unique_ptr<Cube>>& cubes, float maxDistance = 10.0f) const;
+	bool isCubePointed(const Cube& cube, float maxDistance) const;
 
 	float get_X() {
 		return Position.x;
@@ -46,6 +48,18 @@ public:
 
 	float get_Z() {
 		return Position.z;
+	}
+
+	void set_X(float v) {
+		Position.x = v;
+	}
+
+	void set_Y(float v) {
+		Position.y = v;
+	}
+	
+	void set_Z(float v) {
+		Position.z = v;
 	}
 
 	void setPosition(glm::vec3 pos) {

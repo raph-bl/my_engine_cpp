@@ -23,6 +23,16 @@ GLFWwindow *window;
 static Camera *cam = nullptr;
 WindowManager *manager = WindowManager::getInstance();
 std::vector<std::unique_ptr<Cube>> cubes;
+float vecX = 1.0f;
+float vecY = 5.0f;
+float vecZ = 1.0f;
+bool vecYIncrease = true;
+
+static float velocityY = -2.5f;
+static const float gravity = -800.0f;
+static const float ground_level = 1.0f;
+static const float bounce_factor = 0.8f;
+
 void update_loop()
 {
     static float angle = 0.0f;
@@ -45,9 +55,27 @@ void update_loop()
     if (angle >= 360.0f)
         angle -= 360.0f;
 
-    const float targetSec = 1.0f / float(TARGET_FPS);
+        const float targetSec = 1.0f / float(TARGET_FPS);
+        velocityY += gravity * delta;
+        vecY += velocityY * delta;
+        
+        if (vecY <= ground_level) {
+            vecY = ground_level;
+            velocityY = -velocityY * bounce_factor;
+            
+            if (abs(velocityY) < 1.0f) {
+                velocityY = 0.0f;
+                vecX = static_cast<float>(rand()) / static_cast<float>(RAND_MAX) * 10.0f - 5.0f;
+                vecZ = static_cast<float>(rand()) / static_cast<float>(RAND_MAX) * 10.0f - 5.0f;
+                vecY = 5.0f; 
+                velocityY = 0.0f;
+            }
+        }
+        
     if (delta < targetSec)
     {
+        // cout << vecY << endl;
+        // cout << vecX << endl;
         std::this_thread::sleep_for(std::chrono::duration<float>(targetSec - delta));
         last = clock::now();
     }
@@ -72,23 +100,34 @@ void render_loop()
     glm::vec3 previewPos = camPos + camFront * 5.0f;
     static glm::vec3 prev_pos = camPos;
     bool moving = prev_pos != camPos;
-    
+    bool collisionDetected = false;
+    int closestCubeIndex = -1;
+    float closestDistance = 1.5f;
+
+    glPushMatrix();
+    glColor3f(0.0f, 0.0f, 0.0f);
+    glTranslatef(vecX, vecY, vecZ);
+    glLineWidth(5.0f);
+    glutWireSphere(1.0f, 30, 30);
+    glLineWidth(1.0f);
+    glPopMatrix();
+    if (cam->get_Y() <= 0) {
+        cam->set_Y(0.5f);
+    }
+
     if (moving) {
         cout << "Player moved from (" 
-             << prev_pos.x << ", " << prev_pos.y << ", " << prev_pos.z 
-             << ") to (" 
+        << prev_pos.x << ", " << prev_pos.y << ", " << prev_pos.z 
+        << ") to (" 
              << camPos.x << ", " << camPos.y << ", " << camPos.z 
              << ")" << endl;        
-        bool collisionDetected = false;
-        int closestCubeIndex = -1;
-        float closestDistance = 1.5f;
-        
+
         for (size_t i = 0; i < cubes.size(); i++) {
             if (!cubes[i]) continue;
             
             glm::vec3 cubePos = cubes[i]->getPosition();
             float distanceFromCamera = cam->getDistanceToCube(cubePos);
-
+            
             if (distanceFromCamera < closestDistance) {
                 cout << "COLLISION detected with cube " << i << " at distance " << distanceFromCamera << endl;
                 cam->setPosition(prev_pos);
@@ -105,6 +144,46 @@ void render_loop()
         }
     } else {
         prev_pos = camPos;
+    }
+
+    static int lastPointedCube = -1;
+    
+    if (lastPointedCube >= 0 && lastPointedCube < static_cast<int>(cubes.size()) && cubes[lastPointedCube]) {
+        cubes[lastPointedCube]->setColor(1.0f, 1.0f, 1.0f);
+    }
+    
+    int currentPointedCube = cam->getPointedCubeIndex(cubes);
+    
+    if (currentPointedCube >= 0 && currentPointedCube < static_cast<int>(cubes.size()) && cubes[currentPointedCube]) {
+        float distanceToPointed = cam->getDistanceToCube(cubes[currentPointedCube]->getPosition());
+        
+        if (distanceToPointed > 1.5f && distanceToPointed < 10.0f) {
+            glm::vec3 cubePos = cubes[currentPointedCube]->getPosition();
+            glPushMatrix();
+            glTranslatef(cubePos.x, cubePos.y, cubePos.z);
+            
+            // Sauvegarder la couleur actuelle
+            // GLfloat prevColor[4];
+            // glGetFloatv(GL_CURRENT_COLOR, prevColor);
+            
+            
+            glColor3f(0.0f, 0.0f, 0.0f);
+            glLineWidth(5.0f);
+            glutWireCube(1.0f);
+            glLineWidth(1.0f);
+            
+            // Restaurer la couleur
+            // glColor4fv(prevColor);
+            glPopMatrix();
+            
+            lastPointedCube = currentPointedCube;
+        } else {
+            cubes[currentPointedCube]->setColor(1.0f, 1.0f, 1.0f);
+            lastPointedCube = -1;
+        }
+    } else {
+        // Aucun cube pointé
+        lastPointedCube = -1;
     }
 
     if (cam->get_player_gamemode())
@@ -172,7 +251,7 @@ void render_loop()
 
 void init()
 {
-    cam = new Camera(manager->getWidth(), manager->getHeight(), glm::vec3(0.0f, 0.0f, 0.0f));
+    cam = new Camera(manager->getWidth(), manager->getHeight(), glm::vec3(0.0f, 0.5f, 0.0f));
 
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
